@@ -439,9 +439,48 @@ public class PartAnnihilationPlane extends PartBasicState implements IGridTickab
         final boolean ignoreBlocks = state.getBlock() == Blocks.BEDROCK || state.getBlock() == Blocks.END_PORTAL || state
                 .getBlock() == Blocks.END_PORTAL_FRAME || state.getBlock() == Blocks.COMMAND_BLOCK;
 
-        return !ignoreMaterials && !ignoreBlocks && hardness >= 0f && !w.isAirBlock(pos) && w.isBlockLoaded(pos) && w.canMineBlockBody(
+        if (!( !ignoreMaterials && !ignoreBlocks && hardness >= 0f && !w.isAirBlock(pos) && w.isBlockLoaded(pos) && w.canMineBlockBody(
                 Platform.getPlayer(w),
-                pos);
+                pos))) {
+            return false;
+        }
+
+        // New rule: Only break blocks that already exist in the ME network (as one of their actual drops)
+        return this.blockDropsExistInNetwork(w, pos);
+    }
+
+    /**
+     * Returns true if at least one of the block's resulting drops already exists in the ME network storage.
+     * Uses the same silk-touch/fortune logic as actual breaking, to match what would be inserted.
+     */
+    private boolean blockDropsExistInNetwork(final WorldServer w, final BlockPos pos) {
+        List<ItemStack> drops = this.obtainBlockDrops(w, pos);
+        if (drops == null || drops.isEmpty()) {
+            return false;
+        }
+
+        try {
+            final IStorageGrid storage = this.getProxy().getStorage();
+            final appeng.api.storage.IMEInventory<IAEItemStack> inv = storage.getInventory(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class));
+            for (ItemStack is : drops) {
+                if (is.isEmpty()) {
+                    continue;
+                }
+                ItemStack probe = is.copy();
+                probe.setCount(1);
+                IAEItemStack ae = AEItemStack.fromItemStack(probe);
+                // If the network can SIMULATE extracting one of this item, it means it already exists.
+                IAEItemStack extracted = inv.extractItems(ae, Actionable.SIMULATE, this.mySrc);
+                if (extracted != null && extracted.getStackSize() > 0) {
+                    return true;
+                }
+            }
+        } catch (final GridAccessException e) {
+            // Treat as not existing if we cannot access the grid right now.
+            return false;
+        }
+
+        return false;
     }
 
     protected List<ItemStack> obtainBlockDrops(final WorldServer w, final BlockPos pos) {
@@ -481,8 +520,8 @@ public class PartAnnihilationPlane extends PartBasicState implements IGridTickab
         }
 
         if (!enchantments.isEmpty()) {
-            var efficiencyFactor = 1f;
-            var efficiencyLevel = 0;
+            float efficiencyFactor = 1f;
+            int efficiencyLevel = 0;
             if (enchantments.containsKey(Enchantments.EFFICIENCY)) {
                 // Reduce total energy usage incurred by other enchantments by 15% per Efficiency level.
                 efficiencyLevel = enchantments.get(Enchantments.EFFICIENCY);
@@ -494,7 +533,7 @@ public class PartAnnihilationPlane extends PartBasicState implements IGridTickab
                 int randomNumber = ThreadLocalRandom.current().nextInt(enchantments.get(Enchantments.UNBREAKING) + 1);
                 useEnergy = randomNumber == 0;
             }
-            var levelSum = enchantments.values().stream().reduce(0, Integer::sum) - efficiencyLevel;
+            int levelSum = enchantments.values().stream().reduce(0, Integer::sum) - efficiencyLevel;
             requiredEnergy *= 8 * levelSum * efficiencyFactor;
         }
 
