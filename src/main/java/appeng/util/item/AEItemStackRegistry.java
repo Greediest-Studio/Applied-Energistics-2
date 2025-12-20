@@ -27,12 +27,15 @@ import com.google.common.collect.MapMaker;
 import net.minecraft.item.ItemStack;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public final class AEItemStackRegistry {
 
     private static final ItemStackHashStrategy HASH_STRATEGY = ItemStackHashStrategy.comparingAllButCount();
-    private static final Map<Integer, AESharedItemStack> REGISTRY = new MapMaker().weakValues().makeMap();
+    // Use a bucketed map to avoid incorrect collisions when two different ItemStacks produce the same hash.
+    private static final Map<Integer, List<AESharedItemStack>> REGISTRY = new MapMaker().makeMap();
 
     private AEItemStackRegistry() {
     }
@@ -43,17 +46,30 @@ public final class AEItemStackRegistry {
         }
 
         var hash = HASH_STRATEGY.hashCode(itemStack);
-        var ret = REGISTRY.get(hash);
-        if (ret != null) {
-            return ret;
-        }
 
-        // computeIfAbsent is not feasible since new AESharedItemStack gets
-        // instantly GC'd when leaving the lambda.
+        // Copy and normalize the stack used for key comparisons.
         var itemStackCopy = itemStack.copy();
         itemStackCopy.setCount(1);
+
+        // Look up existing bucket for this hash.
+        List<AESharedItemStack> bucket = REGISTRY.get(hash);
+        if (bucket != null) {
+            for (final AESharedItemStack s : bucket) {
+                if (ItemStack.areItemStacksEqual(s.getDefinition(), itemStackCopy)) {
+                    return s;
+                }
+            }
+            // No equal entry found in bucket; create and append.
+            var sharedStack = new AESharedItemStack(itemStackCopy);
+            bucket.add(sharedStack);
+            return sharedStack;
+        }
+
+        // No bucket yet for this hash; create one and insert the new shared stack.
         var sharedStack = new AESharedItemStack(itemStackCopy);
-        REGISTRY.put(hash, sharedStack);
+        var list = new ArrayList<AESharedItemStack>();
+        list.add(sharedStack);
+        REGISTRY.put(hash, list);
         return sharedStack;
     }
 }
