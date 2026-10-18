@@ -22,18 +22,15 @@ package appeng.client.render.effects;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.client.EffectType;
 import appeng.core.AppEng;
-import appeng.entity.EntityFloatingItem;
 import appeng.entity.ICanDie;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 
 public class AssemblerFX extends Particle implements ICanDie {
 
-    private final EntityFloatingItem fi;
     private final float speed;
     private float time = 0;
 
@@ -43,9 +40,6 @@ public class AssemblerFX extends Particle implements ICanDie {
         this.motionY = 0;
         this.motionZ = 0;
         this.speed = speed;
-        final ItemStack displayItem = is.asItemStackRepresentation();
-        this.fi = new EntityFloatingItem(this, w, x, y, z, displayItem);
-        w.spawnEntity(this.fi);
         this.particleMaxAge = (int) Math.ceil(Math.max(1, 100.0f / speed)) + 2;
     }
 
@@ -75,13 +69,6 @@ public class AssemblerFX extends Particle implements ICanDie {
         this.motionX *= 0.9800000190734863D;
         this.motionY *= 0.9800000190734863D;
         this.motionZ *= 0.9800000190734863D;
-
-        if (this.isExpired) {
-            this.fi.setDead();
-        } else {
-            final float lifeSpan = (float) this.particleAge / (float) this.particleMaxAge;
-            this.fi.setProgress(lifeSpan);
-        }
     }
 
     @Override
