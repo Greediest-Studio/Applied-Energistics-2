@@ -497,7 +497,10 @@ public class ToolColorApplicator extends AEBasePoweredItem implements IStorageCe
 
     @Override
     public FuzzyMode getFuzzyMode(final ItemStack is) {
-        final String fz = Platform.openNbtData(is).getString("FuzzyMode");
+        if (!is.hasTagCompound()) {
+            return FuzzyMode.IGNORE_ALL;
+        }
+        final String fz = is.getTagCompound().getString("FuzzyMode");
         try {
             return FuzzyMode.valueOf(fz);
         } catch (final Throwable t) {
@@ -507,6 +510,9 @@ public class ToolColorApplicator extends AEBasePoweredItem implements IStorageCe
 
     @Override
     public void setFuzzyMode(final ItemStack is, final FuzzyMode fzMode) {
+        if (fzMode == FuzzyMode.IGNORE_ALL && !is.hasTagCompound()) {
+            return;
+        }
         Platform.openNbtData(is).setString("FuzzyMode", fzMode.name());
     }
 

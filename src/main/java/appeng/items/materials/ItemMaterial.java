@@ -351,7 +351,10 @@ public final class ItemMaterial extends AEBaseItem implements IStorageComponent,
 
     @Override
     public FuzzyMode getFuzzyMode(final ItemStack is) {
-        final String fz = Platform.openNbtData(is).getString("FuzzyMode");
+        if (!is.hasTagCompound()) {
+            return FuzzyMode.IGNORE_ALL;
+        }
+        final String fz = is.getTagCompound().getString("FuzzyMode");
         try {
             return FuzzyMode.valueOf(fz);
         } catch (final Throwable t) {
@@ -361,6 +364,9 @@ public final class ItemMaterial extends AEBaseItem implements IStorageComponent,
 
     @Override
     public void setFuzzyMode(final ItemStack is, final FuzzyMode fzMode) {
+        if (fzMode == FuzzyMode.IGNORE_ALL && !is.hasTagCompound()) {
+            return;
+        }
         Platform.openNbtData(is).setString("FuzzyMode", fzMode.name());
     }
 

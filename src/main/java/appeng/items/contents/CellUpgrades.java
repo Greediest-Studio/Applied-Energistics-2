@@ -30,7 +30,9 @@ public final class CellUpgrades extends StackUpgradeInventory {
     public CellUpgrades(final ItemStack is, final int upgrades) {
         super(is, null, upgrades);
         this.is = is;
-        this.readFromNBT(Platform.openNbtData(is), "upgrades");
+        if (is.hasTagCompound()) {
+            this.readFromNBT(is.getTagCompound(), "upgrades");
+        }
     }
 
     @Override

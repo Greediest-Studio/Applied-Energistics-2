@@ -31,7 +31,9 @@ public class CellConfig extends AppEngInternalInventory {
     public CellConfig(final ItemStack is) {
         super(null, 63);
         this.is = is;
-        this.readFromNBT(Platform.openNbtData(is), "list");
+        if (is.hasTagCompound()) {
+            this.readFromNBT(is.getTagCompound(), "list");
+        }
     }
 
     @Override

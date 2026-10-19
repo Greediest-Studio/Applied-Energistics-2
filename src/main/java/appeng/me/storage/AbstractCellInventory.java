@@ -80,7 +80,11 @@ public abstract class AbstractCellInventory<T extends IAEStack<T>> implements IC
         }
 
         this.container = container;
+        final boolean hadTag = o.hasTagCompound();
         this.tagCompound = Platform.openNbtData(o);
+        if (!hadTag && this.tagCompound.isEmpty()) {
+            o.setTagCompound(null);
+        }
         this.storedItemTypes = this.tagCompound.getShort(ITEM_TYPE_TAG);
         this.storedItemCount = this.tagCompound.getLong(ITEM_COUNT_TAG);
         this.cellItems = null;
@@ -136,6 +140,12 @@ public abstract class AbstractCellInventory<T extends IAEStack<T>> implements IC
         for (; x >= oldStoredItems && x < this.maxItemTypes; x++) {
             this.tagCompound.removeTag(ITEM_SLOT_KEYS[x]);
             this.tagCompound.removeTag(ITEM_SLOT_COUNT_KEYS[x]);
+        }
+
+        if (this.tagCompound.isEmpty()) {
+            this.i.setTagCompound(null);
+        } else {
+            this.i.setTagCompound(this.tagCompound);
         }
 
         this.isPersisted = true;
