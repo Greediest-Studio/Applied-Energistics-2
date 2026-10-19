@@ -104,15 +104,21 @@ public class ToolMemoryCard extends AEBaseItem implements IMemoryCard {
 
     @Override
     public String getSettingsName(final ItemStack is) {
-        final NBTTagCompound c = Platform.openNbtData(is);
-        final String name = c.getString("Config");
+        if (!is.hasTagCompound()) {
+            return GuiText.Blank.getUnlocalized();
+        }
+        final NBTTagCompound c = is.getTagCompound();
+        final String name = c != null ? c.getString("Config") : null;
         return name == null || name.isEmpty() ? GuiText.Blank.getUnlocalized() : name;
     }
 
     @Override
     public NBTTagCompound getData(final ItemStack is) {
-        final NBTTagCompound c = Platform.openNbtData(is);
-        NBTTagCompound o = c.getCompoundTag("Data");
+        if (!is.hasTagCompound()) {
+            return new NBTTagCompound();
+        }
+        final NBTTagCompound c = is.getTagCompound();
+        NBTTagCompound o = c != null ? c.getCompoundTag("Data") : null;
         if (o == null) {
             o = new NBTTagCompound();
         }

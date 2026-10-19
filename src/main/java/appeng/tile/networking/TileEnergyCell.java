@@ -116,10 +116,13 @@ public class TileEnergyCell extends AENetworkTile implements IAEPowerStorage {
     @Override
     public NBTTagCompound downloadSettings(final SettingsFrom from) {
         if (from == SettingsFrom.DISMANTLE_ITEM) {
-            final NBTTagCompound tag = new NBTTagCompound();
-            tag.setDouble("internalCurrentPower", this.internalCurrentPower);
-            tag.setDouble("internalMaxPower", this.getInternalMaxPower()); // used for tool tip.
-            return tag;
+            if (this.internalCurrentPower > 0.001) {
+                final NBTTagCompound tag = new NBTTagCompound();
+                tag.setDouble("internalCurrentPower", this.internalCurrentPower);
+                tag.setDouble("internalMaxPower", this.getInternalMaxPower()); // used for tool tip.
+                return tag;
+            }
+            return null;
         }
         return null;
     }

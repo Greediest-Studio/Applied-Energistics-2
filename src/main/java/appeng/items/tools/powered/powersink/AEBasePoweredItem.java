@@ -112,10 +112,12 @@ public abstract class AEBasePoweredItem extends AEBaseItem implements IAEItemPow
         final double overflow = amount - required;
 
         if (mode == Actionable.MODULATE) {
-            final NBTTagCompound data = Platform.openNbtData(is);
             final double toAdd = Math.min(amount, required);
-
-            data.setDouble(CURRENT_POWER_NBT_KEY, currentStorage + toAdd);
+            final double newPower = currentStorage + toAdd;
+            if (newPower > 0.0001) {
+                final NBTTagCompound data = Platform.openNbtData(is);
+                data.setDouble(CURRENT_POWER_NBT_KEY, newPower);
+            }
         }
 
         return Math.max(0, overflow);
@@ -127,9 +129,22 @@ public abstract class AEBasePoweredItem extends AEBaseItem implements IAEItemPow
         final double fulfillable = Math.min(amount, currentStorage);
 
         if (mode == Actionable.MODULATE) {
-            final NBTTagCompound data = Platform.openNbtData(is);
-
-            data.setDouble(CURRENT_POWER_NBT_KEY, currentStorage - fulfillable);
+            final double newPower = currentStorage - fulfillable;
+            if (newPower > 0.0001) {
+                final NBTTagCompound data = Platform.openNbtData(is);
+                data.setDouble(CURRENT_POWER_NBT_KEY, newPower);
+            } else {
+                if (is.hasTagCompound()) {
+                    final NBTTagCompound data = is.getTagCompound();
+                    if (data != null) {
+                        data.removeTag(CURRENT_POWER_NBT_KEY);
+                        data.removeTag(MAX_POWER_NBT_KEY);
+                        if (data.isEmpty()) {
+                            is.setTagCompound(null);
+                        }
+                    }
+                }
+            }
         }
 
         return fulfillable;
@@ -142,9 +157,11 @@ public abstract class AEBasePoweredItem extends AEBaseItem implements IAEItemPow
 
     @Override
     public double getAECurrentPower(final ItemStack is) {
-        final NBTTagCompound data = Platform.openNbtData(is);
-
-        return data.getDouble(CURRENT_POWER_NBT_KEY);
+        if (!is.hasTagCompound()) {
+            return 0.0;
+        }
+        final NBTTagCompound data = is.getTagCompound();
+        return data != null ? data.getDouble(CURRENT_POWER_NBT_KEY) : 0.0;
     }
 
     @Override

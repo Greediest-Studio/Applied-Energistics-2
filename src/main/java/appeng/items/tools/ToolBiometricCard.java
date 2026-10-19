@@ -104,8 +104,11 @@ public class ToolBiometricCard extends AEBaseItem implements IBiometricCard {
 
     @Override
     public GameProfile getProfile(final ItemStack is) {
-        final NBTTagCompound tag = Platform.openNbtData(is);
-        if (tag.hasKey("profile")) {
+        if (!is.hasTagCompound()) {
+            return null;
+        }
+        final NBTTagCompound tag = is.getTagCompound();
+        if (tag != null && tag.hasKey("profile")) {
             return NBTUtil.readGameProfileFromNBT(tag.getCompoundTag("profile"));
         }
         return null;
@@ -113,12 +116,16 @@ public class ToolBiometricCard extends AEBaseItem implements IBiometricCard {
 
     @Override
     public EnumSet<SecurityPermissions> getPermissions(final ItemStack is) {
-        final NBTTagCompound tag = Platform.openNbtData(is);
+        if (!is.hasTagCompound()) {
+            return EnumSet.noneOf(SecurityPermissions.class);
+        }
+        final NBTTagCompound tag = is.getTagCompound();
         final EnumSet<SecurityPermissions> result = EnumSet.noneOf(SecurityPermissions.class);
-
-        for (final SecurityPermissions sp : SecurityPermissions.values()) {
-            if (tag.getBoolean(sp.name())) {
-                result.add(sp);
+        if (tag != null) {
+            for (final SecurityPermissions sp : SecurityPermissions.values()) {
+                if (tag.getBoolean(sp.name())) {
+                    result.add(sp);
+                }
             }
         }
 
@@ -127,8 +134,11 @@ public class ToolBiometricCard extends AEBaseItem implements IBiometricCard {
 
     @Override
     public boolean hasPermission(final ItemStack is, final SecurityPermissions permission) {
-        final NBTTagCompound tag = Platform.openNbtData(is);
-        return tag.getBoolean(permission.name());
+        if (!is.hasTagCompound()) {
+            return false;
+        }
+        final NBTTagCompound tag = is.getTagCompound();
+        return tag != null && tag.getBoolean(permission.name());
     }
 
     @Override

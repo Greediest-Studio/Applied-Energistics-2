@@ -126,14 +126,22 @@ public class ToolWirelessTerminal extends AEBasePoweredItem implements IWireless
         out.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
         out.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
 
-        out.readFromNBT(Platform.openNbtData(target).copy());
+        if (target.hasTagCompound()) {
+            final NBTTagCompound tag = target.getTagCompound();
+            if (tag != null) {
+                out.readFromNBT(tag.copy());
+            }
+        }
         return out;
     }
 
     @Override
     public String getEncryptionKey(final ItemStack item) {
-        final NBTTagCompound tag = Platform.openNbtData(item);
-        return tag.getString("encryptionKey");
+        if (!item.hasTagCompound()) {
+            return "";
+        }
+        final NBTTagCompound tag = item.getTagCompound();
+        return tag != null ? tag.getString("encryptionKey") : "";
     }
 
     @Override
